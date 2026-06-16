@@ -12,8 +12,9 @@ Machines : **PC-Win** (récepteur sur COM5), **serveur**, **mac**.
   - 115200 paraissait propre mais **faux** (aliasing) — à ignorer.
   - **250000 bauds, 8N1** = vrai débit. Trame **4 o** délimitée par `FF`.
 - Heartbeat repos = `42 CE 4E FF` (~10 Hz).
-- Test boutons : appui **maintenu** sur bouton 1 (haut/arrière) → trame **identique** au repos.
+- Test boutons : appui **maintenu** sur bouton « haut » (= haut/arrière) → trame **identique** au repos.
   → hypothèse : boutons = **événements à l'appui**, pas un état permanent. **À CONFIRMER**.
+- Convention de nommage des 4 boutons fixée : **haut / bas / gauche / droite** (haut = le bouton haut/arrière).
 - Mise en place du repo de suivi `tapis-rf` (Git + GitHub CLI installés sur PC-Win).
 
 ### À faire

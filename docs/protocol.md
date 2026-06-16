@@ -27,7 +27,16 @@ Parsing : lire le flux, découper sur `0xFF`, chaque trame = les 3 octets qui pr
 
 ## Boutons (À CONFIRMER)
 
-- Le tapis a **4 boutons** (bouton 1 = haut/arrière ; les autres à nommer).
+- Le tapis a **4 boutons**, nommés par **position** : **haut, bas, gauche, droite**.
+- **haut** = le bouton « haut / arrière » (celui testé en premier). Les 3 autres restent à capter.
+
+| Bouton | Position physique | Signature (payload 3 o) |
+|---|---|---|
+| **haut** | haut / arrière | à confirmer |
+| **bas** | bas / avant | à confirmer |
+| **gauche** | gauche | à confirmer |
+| **droite** | droite | à confirmer |
+
 - Observation : **maintenir un bouton ne modifie PAS** la trame heartbeat `42 CE 4E FF`
   (testé à 115200 ET à 250000 → identique au repos).
 - **Hypothèse de travail** : les boutons sont des **événements envoyés à l'instant de l'appui**
