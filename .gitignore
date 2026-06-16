@@ -1,0 +1,9 @@
+# Captures / logs bruts
+*.log
+*.bin
+captures/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
