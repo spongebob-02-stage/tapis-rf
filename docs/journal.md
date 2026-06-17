@@ -86,4 +86,62 @@ commande de « réveil ». Démontré, pas supposé.
 
 ---
 
+## 2026-06-17 — Téléphone (Claude téléphone) — Identité produit, internes tapis, capteurs, stratégie
+
+Session de diagnostic « terrain » (au téléphone), **complémentaire** des mesures série PC-Win du même
+jour. Apporte le **contexte produit** et l'**électronique de l'émetteur** qui manquaient au repo.
+
+### Identité du matériel (NOUVEAU)
+- Produit = **tapis de danse iDANCE2** (Positive Gaming, gamme *Impact Dance Platform*), variante
+  **sans-fil** : batteries + récepteur RF + PC Windows dédié + logiciel **propriétaire**.
+- La « borne clé en main » = ce **PC iDANCE2 + son logiciel** (contexte activation WeStage). **> 4 tapis**
+  dispo, matériel **modifiable** (on peut ouvrir/bricoler).
+
+### Capteurs de pas — CONFIRMÉ : contact sec, pas un FSR
+- Chaque flèche = **interrupteur normalement ouvert** (2 fils). 2 plaques métalliques/panneau ;
+  marcher dessus ferme le circuit.
+- Panneaux → **PCB capteurs central** (JST 2 broches UP/DOWN/LEFT/RIGHT) → carte principale via **câble RJ**.
+- **Test multimètre (continuité)** : repos = ouvert (pas de bip) ; appui = bip / ~0 Ω ; relâché =
+  réouverture nette. → mécanique de détection **saine** sur le tapis testé.
+
+### Électronique de l'émetteur (le tapis) (NOUVEAU)
+- MCU + module RF doré **« TRU-246 »** + antenne PCB, quartz **FS8.000P (8 MHz)**, **DIP switches**
+  (= très probablement **ID/canal** du tapis), connecteur batterie, LED de charge tricolore.
+- Batterie = pack **NiMH AA 4.8 V 1500 mAh** (4 accus), ~70 h annoncées.
+- Appairage officiel : on/off du tapis puis **marcher sur la flèche HAUT** pour connecter. Multi-systèmes
+  via **fréquences différentes** → chaque tapis a un **ID radio**.
+- ⚠️ Fréquence exacte du **TRU-246** = NON confirmée. À distinguer du module **récepteur** « TRH-?16 »
+  ~916 MHz (voir `docs/materiel.md`).
+
+### ✅ Test RF réussi
+- Un tapis intact, allumé + appairé, s'est affiché à l'écran comme **tapis n°9** → toute la chaîne
+  batterie → MCU → RF → antenne → récepteur → logiciel est **fonctionnelle**.
+
+### Symptôme « seule la flèche HAUT répond » (en cours)
+- **PIÈGE** : HAUT est la flèche **spéciale** (appairage + validation menu). Qu'elle réponde prouve
+  juste que le tapis **se connecte**, pas qu'une chanson lit les 4 pas.
+- Causes par ordre : (1) pas dans un round jouable (démo/attract) ; (2) **batterie faible** (s'annonce
+  en RF mais ne transmet pas les pas) → recharger à fond ; (3) défaut propre au tapis.
+- **Test différentiel** (on a > 4 tapis) : lancer une vraie chanson et comparer 2-3 tapis.
+
+### Note opérationnelle — PC bloqué au BIOS (résolu)
+- Écran AMI « CMOS Battery Low » → pile **CR2032** de la carte mère morte. **F2** continue le boot.
+  Clavier **BT inopérant dans le BIOS** → clavier **USB filaire**. Correctif durable : remplacer la
+  CR2032, régler l'heure, vérifier *USB Legacy Support*.
+
+### Lien avec les mesures série PC-Win
+- Le **Plan B** (sniff passif récepteur→PC) est **affiné** par la mesure PC-Win du jour : en COM5
+  passif on n'obtient **que la balise** `42 CE 4E`, **jamais** les boutons → il **faut le handshake**
+  de la borne. Donc Plan B passif insuffisant seul → **sniff matériel** borne↔récepteur (déjà la
+  prochaine étape du repo) ou bascule **Plan C** (retrofit). Détail dans `docs/plan.md`.
+
+### À faire
+- [ ] Remplacer la pile **CR2032** de la carte mère.
+- [ ] **Recharger à fond** les tapis avant tout verdict sur les flèches.
+- [ ] **Test différentiel** : vraie chanson, comparer plusieurs tapis (4 flèches lues ou non).
+- [ ] Brancher le récepteur sur le **laptop** → catégorie (COM / HID / générique) + VID:PID.
+- [ ] Décider **Plan B (sniff)** vs **Plan C (retrofit)** selon lisibilité protocole + latence.
+
+---
+
 <!-- Nouvelles entrées au-dessus de cette ligne. Indiquer la machine. -->
