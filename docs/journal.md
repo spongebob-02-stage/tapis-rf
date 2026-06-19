@@ -144,4 +144,43 @@ jour. Apporte le **contexte produit** et l'**électronique de l'émetteur** qui 
 
 ---
 
+## 2026-06-19 — Borne inaccessible sous Windows → pivot vers transceiver RF (émuler un tapis)
+
+Deux décisions du jour : (1) la capture **logicielle** sur la borne est infaisable ; (2) on **change
+d'angle** — au lieu de courir après le handshake borne↔récepteur, on agit **côté radio**.
+
+### Accès borne — constat
+- PC **très ancien**, **BIOS AMI** (cohérent avec l'épisode CR2032/F2). Entrée BIOS par **F2** au POST.
+- **Aucun accès au bureau Windows une fois le jeu lancé** : tous les raccourcis sont avalés (`Win`,
+  `Alt+Tab`, `Ctrl+Shift+Échap`, `Ctrl+Alt+Suppr`… → rien). Kiosque plein écran qui mange le clavier.
+- → **Capture logicielle USB (USBPcap/Wireshark) écartée** : driver noyau (admin + reboot) **et** il
+  faut lancer Wireshark dans ce Windows-là, inatteignable. Boot Linux live inutile pour le sniff (jeu
+  arrêté = pas de handshake). Ne pas risquer la seule machine de référence.
+
+### Pivot : transceiver RF plutôt que sniff du handshake
+Au lieu d'espionner / rejouer le dialogue borne↔récepteur, on **se met sur la radio** avec notre
+propre transceiver **sub-GHz** (même bande que le récepteur d'origine **TRH-?16 ~916 MHz**) :
+- **émettre** des trames forgées vers le **récepteur d'origine** (laissé branché) → il les relaie au
+  jeu comme un vrai tapis. **Contourne le handshake** (c'est la borne qui réveille le récepteur).
+- **recevoir** directement ce qu'émettent les vrais tapis → décoder ID + flèches pour notre moteur.
+- **Récepteur + borne intacts → jeu de base jouable EN PARALLÈLE**, rien à débrancher ni souder.
+- C'est le nouveau **Plan D** (voir `docs/plan.md`) ; montage détaillé dans `docs/transceiver-rf.md`.
+
+### Matériel
+- Cible : transceiver **sub-GHz** accordable (ex. **CC1101 868/915 MHz**, ~3-5 €, SPI depuis ESP32/Pico)
+  **ou** un module **identique au TRU-246** récupéré sur un tapis de spare (émulation 1:1). RTL-SDR
+  (~25 €) utile pour la recon de bande/modulation.
+- ⚠️ **Bloquant avant achat ferme** : identifier l'**IC RF** + la **bande/modulation** réelles des
+  modules **TRU-246** (tapis) et **TRH-?16** (récepteur). Pas de commande à l'aveugle.
+
+### À faire (prochaine session)
+- [ ] Relever réfs **TRU-246 / TRH-?16** → IC RF + **bande** + **modulation** (GFSK/ASK ?).
+- [ ] Choisir/commander le transceiver (CC1101 ou module identique au tapis) + MCU hôte.
+- [ ] **Recon RF** : capturer un vrai tapis (1 flèche / 1 tapis à la fois) → ID + bitmask + checksum.
+- [ ] **Émettre** une trame forgée → validée si elle s'affiche dans le jeu (récepteur d'origine intact).
+- [ ] **Reader** PC : sortie `{tapis, flèche, appui}` + pont WebSocket vers le moteur.
+- [ ] Vérifier en fin de séance que vrais tapis + récepteur d'origine **rejouent au jeu de base**.
+
+---
+
 <!-- Nouvelles entrées au-dessus de cette ligne. Indiquer la machine. -->

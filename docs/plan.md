@@ -27,6 +27,11 @@ multi-tapis) **intacte et réversible** tant que possible.
 >   pendant que le jeu tourne, 250000 8N1) → récupérer le handshake + les trames de boutons, puis les
 >   rejouer. *(= prochaine étape déjà actée, voir `docs/protocol.md` et `docs/journal.md`.)*
 > - Sinon bascule **Plan C**.
+>
+> 🚫 **MAJ 2026-06-19** : la capture logicielle (USBPcap) sur la borne est **écartée** (bureau Windows
+> inatteignable), et on **ne poursuit plus** le sniff/replay du handshake en priorité — le **Plan D
+> (transceiver RF)** ci-dessous **contourne le handshake** (on émet en amont du récepteur). Détail
+> `docs/transceiver-rf.md` et `docs/journal.md`.
 
 ## Plan C — Retrofit (fallback ; on est libres de bricoler)
 - Repiquer les **4 contacts** de chaque tapis vers notre microcontrôleur :
@@ -35,6 +40,18 @@ multi-tapis) **intacte et réversible** tant que possible.
 - ➕ Contrôle total latence/mapping. ➖ Ouvrir les tapis, refaire alim/appairage pour > 4 unités.
 - À garder si le protocole est **chiffré/illisible** ou la **latence RF** d'origine trop élevée pour
   du jeu de rythme.
+
+## Plan D — Transceiver RF, émuler un tapis (retenu 2026-06-19)
+- On se met **côté radio** avec notre propre transceiver **sub-GHz** (même bande que le récepteur
+  d'origine **TRH-?16 ~916 MHz**) : **recevoir** les trames d'un vrai tapis (ID + 4 flèches) **et
+  émettre** des trames forgées que le **récepteur d'origine accepte** comme venant d'un tapis.
+- ➕ **Contourne le handshake** borne↔récepteur (on injecte en amont du récepteur ; c'est la borne qui
+  le réveille normalement). ➕ Récepteur + borne **intacts** → **jeu de base jouable en parallèle**,
+  rien à débrancher ni souder. ➕ La réception RF directe sert aussi le but final (lire les tapis dans
+  notre moteur).
+- ➖ Demande d'**identifier d'abord l'IC RF + la bande/modulation** (TRU-246 / TRH-?16) avant de
+  pouvoir accorder le transceiver et forger une trame valide.
+- Montage, matériel et procédure : **`docs/transceiver-rf.md`**.
 
 ## Reverse engineering du jeu — note
 - Décompiler le jeu = **mauvais chemin** : son code montre comment **lui** affiche/score les flèches,

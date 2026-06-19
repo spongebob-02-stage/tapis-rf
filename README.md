@@ -18,8 +18,12 @@ partagée** entre les machines de travail (PC Windows, serveur, Mac).
   identique avec ou sans appui ; les écarts sont du bruit RF (flips d'1 bit).
 - 🔑 **Compris** : le récepteur ne sort les boutons **qu'après un handshake** envoyé par le logiciel
   de la borne. DTR/RTS et commandes simples écartés → handshake non devinable à l'aveugle.
-- 🔜 **Prochaine étape** : **sniffer matériel** (analyseur logique / 2ᵉ USB-TTL) du dialogue
-  borne↔récepteur pendant que le jeu tourne → récupérer le handshake + les trames de boutons.
+- 🚫 **Sniff du handshake borne↔récepteur abandonné (2026-06-19)** : capture logicielle sur la borne
+  impossible (bureau Windows inatteignable, kiosque plein écran ; seul **F2 → BIOS** répond), et inutile
+  de courir après le handshake — voir ci-dessous. Détail `docs/journal.md`.
+- 🔜 **Prochaine étape** : **transceiver RF (émuler un tapis)** — on passe **côté radio** : **émettre**
+  des trames vers le récepteur d'origine (laissé branché → **jeu de base jouable en parallèle**) **et
+  recevoir** les tapis directement. **Contourne le handshake.** Montage : `docs/transceiver-rf.md`.
 
 ## Matériel
 
@@ -58,9 +62,10 @@ Voir `docs/protocol.md` pour le format de trame et l'état du décodage.
 ## Organisation
 
 ```
-docs/protocol.md   # format série + trame, ce qui est confirmé / à confirmer
-docs/materiel.md   # fiche matériel : émetteur (tapis) vs récepteur, capteurs, appairage
-docs/plan.md       # architecture cible : Plan A (HID) / B (sniff) / C (retrofit)
-docs/journal.md    # journal de suivi daté (multi-machines)
-scripts/           # lecteurs / outils
+docs/protocol.md       # format série + trame, ce qui est confirmé / à confirmer
+docs/materiel.md       # fiche matériel : émetteur (tapis) vs récepteur, capteurs, appairage
+docs/transceiver-rf.md # approche retenue (2026-06-19) : émuler un tapis en RF (émettre + recevoir)
+docs/plan.md           # architecture cible : Plan A (HID) / B (sniff) / C (retrofit) / D (transceiver RF)
+docs/journal.md        # journal de suivi daté (multi-machines)
+scripts/               # lecteurs / outils
 ```

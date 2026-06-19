@@ -60,10 +60,17 @@ Pistes de réveil **écartées** (testées le 2026-06-17, voir `scripts/wake_pro
 | Sérigraphie | BUTTON, TEMP, PWR-CHRG, STATUS, BAT, RF |
 | Jeu | **borne clé en main** (auto-lancée au boot, pas copiable, pas open-source) |
 
-## Prochaine étape : sniffer matériel du dialogue borne↔récepteur
+## Prochaine étape : transceiver RF — émuler un tapis (MAJ 2026-06-19)
 
-Comme on ne peut ni lancer le jeu ailleurs, ni installer sur la borne, on **espionne les fils UART**
-de la carte pendant que la **borne** fait marcher le tapis (FTDI branché sur la borne) :
+> ⚠️ On **abandonne** la course au handshake borne↔récepteur (sniff UART / capture USBPcap, cette
+> dernière écartée car bureau Windows inatteignable). On passe **côté radio**.
 
-- **analyseur logique** (ou 2ᵉ USB-TTL) relié au PC, **250000 8N1** ;
-- **TX carte** → trames de **boutons** ; **RX carte** → **handshake** à rejouer ensuite depuis nos scripts.
+Plutôt que de faire parler le récepteur sur COM5, on **se met sur la même radio** que les tapis avec
+notre propre transceiver **sub-GHz** (bande du récepteur **TRH-?16 ~916 MHz**, à confirmer) :
+
+- **recevoir** ce qu'émet un vrai tapis → décoder **ID (DIP switches) + bitmask des 4 flèches + checksum** ;
+- **émettre** une trame forgée → le **récepteur d'origine** (laissé branché sur la borne) la relaie au
+  jeu comme un vrai tapis → **contourne le handshake** ;
+- récepteur + borne **intacts** → **jeu de base toujours jouable en parallèle**.
+
+Montage matériel, liste d'achat et procédure : **`docs/transceiver-rf.md`** (voir aussi `docs/plan.md`, Plan D).
