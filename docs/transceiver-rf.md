@@ -18,11 +18,27 @@ ce qu'un vrai tapis émet (ID + flèches) pour notre moteur, et pouvoir **émett
 
 ## Matériel à sourcer
 
+### Lecteur final (ESP32 + nRF24L01+, branché en USB au PC)
+- **ESP32 DevKit** — carte avec **pont USB-série intégré** (CP2102/CH340) → apparaît tout seul comme
+  **port COM/tty** sur le PC. Pilote le nRF24L01+ en **SPI**. *(sûrement déjà au projet)*
 - **nRF24L01+** (×1–2, ~2 € pièce) — successeur **rétro-compatible** du nRF2401 en ShockBurst (non-Enhanced).
   ⚠️ **Bien prendre la variante « + »** : seule à faire le **250 kbps** (le nRF2401 d'origine peut l'utiliser).
-- **ESP32** (déjà au projet) — pilote le nRF24L01+ en **SPI** + fait le pont vers le moteur.
-- **Analyseur logique 8 voies** (~10 €) — pour la voie déterministe ci-dessous (fortement conseillé).
+- **Condensateur 10–100 µF** sur l'alim du nRF24L01+ **OU** **mini-carte adaptateur** nRF24L01+ (~1 €) —
+  ⚠️ **indispensable** : sans découplage, le module est **instable** (pics de courant).
+- **Fils Dupont femelle-femelle** (~7, pour le SPI : VCC/GND/CE/CSN/SCK/MOSI/MISO) — + breadboard optionnel.
+- **Câble USB data** (micro-USB ou USB-C selon la carte) — un vrai câble **données**, pas charge-seule.
+
+### Relevé des 5 params ShockBurst (étape 0, voie 1)
+- **Analyseur logique 8 voies** (~10 €) — pour **sniffer le mot de config** (CS/CLK1/DATA) au boot du tapis.
+  Câblage : `../captorisation/cablage-analyseur.md`. *(ne sert qu'au relevé, pas au lecteur final.)*
+
+### Notes électriques
+- nRF24L01+ et ESP32 sont **tous deux en 3,3 V** → **pas de level shifter**. ⚠️ **VCC du nRF24L01+ = 3,3 V**
+  (broche `3V3` de l'ESP32), **jamais 5 V**.
+- Antenne PCB intégrée = OK à proximité ; variante *PA+LNA* (antenne SMA) = plus de portée mais alim encore plus sensible.
 - ❌ Plus besoin de **RTL-SDR / CC1101**.
+
+> Budget indicatif (hors ESP32 déjà au projet) : nRF24L01+ + découplage + Dupont ~5 € ; analyseur logique ~10 €.
 
 ## Les 5 paramètres ShockBurst à relever
 
