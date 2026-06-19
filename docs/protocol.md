@@ -56,21 +56,33 @@ Pistes de réveil **écartées** (testées le 2026-06-17, voir `scripts/wake_pro
 |---|---|
 | Liaison hôte | câble **FTDI TTL232R** (USB↔TTL série) sur header 6 broches, TXD a priori câblé |
 | FTDI | `VID 0403:6001`, s/n `FTES44GZ` → **COM5** |
-| Carte réceptrice | **custom** : MCU (QFP) + **module radio sub-GHz ~916 MHz** (blindé, « TRH-?16 », type RFM) + quartz + alim/batterie |
+| Carte réceptrice | **custom** (même PCB que l'émetteur) : **ATMEGA32L** + module **TRW-24G / nRF2401** (2,4 GHz ShockBurst) + quartz + alim |
 | Sérigraphie | BUTTON, TEMP, PWR-CHRG, STATUS, BAT, RF |
 | Jeu | **borne clé en main** (auto-lancée au boot, pas copiable, pas open-source) |
 
-## Prochaine étape : transceiver RF — émuler un tapis (MAJ 2026-06-19)
+## Couche RF — nRF2401 / ShockBurst 2,4 GHz (identifiée 2026-06-19)
 
-> ⚠️ On **abandonne** la course au handshake borne↔récepteur (sniff UART / capture USBPcap, cette
-> dernière écartée car bureau Windows inatteignable). On passe **côté radio**.
+Radio = module **TRW-24G** / puce **Nordic nRF2401**. Format **air = ShockBurst** :
 
-Plutôt que de faire parler le récepteur sur COM5, on **se met sur la même radio** que les tapis avec
-notre propre transceiver **sub-GHz** (bande du récepteur **TRH-?16 ~916 MHz**, à confirmer) :
+```
+Préambule | Adresse (1–5 o) | Payload (longueur fixe) | CRC (0/1/2 o)
+```
 
-- **recevoir** ce qu'émet un vrai tapis → décoder **ID (DIP switches) + bitmask des 4 flèches + checksum** ;
-- **émettre** une trame forgée → le **récepteur d'origine** (laissé branché sur la borne) la relaie au
-  jeu comme un vrai tapis → **contourne le handshake** ;
-- récepteur + borne **intacts** → **jeu de base toujours jouable en parallèle**.
+- Bande **2,4 GHz ISM**, **125 canaux** (1 MHz). **Canal fixé par les DIP** → pas de hopping, un canal fixe suffit.
+- Modulation **GFSK**, débit **250 kbps ou 1 Mbps**.
+- ShockBurst **classique** (pas de payload dynamique) → récepteur à **pré-configurer** :
+  **`RF_CH` (canal) · `RF_DR` (débit) · adresse (largeur + valeur) · longueur payload · CRC**.
 
-Montage matériel, liste d'achat et procédure : **`docs/transceiver-rf.md`** (voir aussi `docs/plan.md`, Plan D).
+## Prochaine étape : récepteur nRF24L01+ (lire sur l'air, MAJ 2026-06-19)
+
+> ⚠️ Abandon de la course au handshake borne↔récepteur (sniff UART / USBPcap). Le verrou « boutons
+> absents en passif » est **MCU↔USB du dongle**, **pas la radio** → on lit **directement sur l'air**.
+
+- **Récepteur de remplacement = nRF24L01+** (variante « + » pour le 250 kbps), piloté en **SPI** par un **ESP32**.
+- **Acquérir les 5 params** (déterministe) : **sniffer le mot de config (~15 o)** écrit par l'**ATMEGA32L**
+  au nRF2401 au boot — analyseur logique sur **CS / CLK1 / DATA**.
+- Puis **capter** un tapis → décoder **ID (DIP) + bitmask flèches + CRC** ; option **émettre** une trame
+  forgée que le dongle accepte (injection).
+- ⚠️ **2,4 GHz saturé** (WiFi/BT) → **filtrer par adresse + CRC**.
+
+Montage, achat et procédure : **`docs/transceiver-rf.md`** ; architecture : **`docs/plan.md`** (Plan D).

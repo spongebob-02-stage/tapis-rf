@@ -18,12 +18,13 @@ partagée** entre les machines de travail (PC Windows, serveur, Mac).
   identique avec ou sans appui ; les écarts sont du bruit RF (flips d'1 bit).
 - 🔑 **Compris** : le récepteur ne sort les boutons **qu'après un handshake** envoyé par le logiciel
   de la borne. DTR/RTS et commandes simples écartés → handshake non devinable à l'aveugle.
-- 🚫 **Sniff du handshake borne↔récepteur abandonné (2026-06-19)** : capture logicielle sur la borne
-  impossible (bureau Windows inatteignable, kiosque plein écran ; seul **F2 → BIOS** répond), et inutile
-  de courir après le handshake — voir ci-dessous. Détail `docs/journal.md`.
-- 🔜 **Prochaine étape** : **transceiver RF (émuler un tapis)** — on passe **côté radio** : **émettre**
-  des trames vers le récepteur d'origine (laissé branché → **jeu de base jouable en parallèle**) **et
-  recevoir** les tapis directement. **Contourne le handshake.** Montage : `docs/transceiver-rf.md`.
+- 🚫 **Sniff du handshake borne↔récepteur abandonné (2026-06-19)** : capture logicielle impossible
+  (bureau Windows inatteignable, kiosque ; seul **F2 → BIOS** répond) — et inutile, on passe côté radio.
+- ✅ **RADIO IDENTIFIÉE (2026-06-19)** : module **TRW-24G** / puce **Nordic nRF2401** → **2,4 GHz GFSK
+  ShockBurst**, 125 canaux, 250 k/1 M. **Émetteur ≡ récepteur** (même PCB). Détail `docs/materiel.md`.
+- 🔜 **Prochaine étape** : récepteur **nRF24L01+** (rétro-compatible, ~2 €, SPI/ESP32) → **lire les
+  tapis sur l'air** (contourne le verrou série) **et émettre** des trames que le dongle accepte. Reste
+  à relever les **5 params ShockBurst**. Montage : `docs/transceiver-rf.md`.
 
 ## Matériel
 
@@ -31,12 +32,13 @@ partagée** entre les machines de travail (PC Windows, serveur, Mac).
 |---|---|
 | Liaison hôte | câble **FTDI TTL232R** (USB↔TTL série) sur la carte réceptrice — `VID 0403:6001`, s/n `FTES44GZ` |
 | Port (Windows) | **COM5** |
-| Récepteur (carte custom) | MCU (QFP) + module radio sub-GHz ~916 MHz **« TRH-?16 »** (type RFM) + quartz + batterie |
-| Émetteur (tapis) | MCU + module RF doré **« TRU-246 »** + antenne PCB, quartz **FS8.000P (8 MHz)**, **DIP switches = ID/canal**, pack **NiMH 4.8 V 1500 mAh** (~70 h). 4 flèches = **contacts secs** NO (haut/bas/gauche/droite) |
+| Récepteur (dongle) | **même PCB** que l'émetteur : **ATMEGA32L** + module **TRW-24G (nRF2401)** + alim |
+| Émetteur (tapis) | **ATMEGA32L** + module RF **TRW-24G** (**nRF2401**, 2,4 GHz GFSK ShockBurst) + antenne boucle PCB, quartz **FS8.000P (8 MHz)**, **DIP switches (8) = ID/canal**, pack **NiMH 4.8 V 1500 mAh** (~70 h). 4 flèches = **contacts secs** NO (haut/bas/gauche/droite) |
 | Jeu | **iDANCE2** : PC Windows d'origine + logiciel **propriétaire** (auto-lancé au boot, pas copiable, pas open-source) |
 
-> ℹ️ **Deux modules RF distincts** : **TRU-246** côté émetteur (tapis), **TRH-?16 ~916 MHz** côté
-> récepteur. Ne pas confondre les réfs — détail dans `docs/materiel.md`.
+> ℹ️ **Même module RF des deux côtés** : **TRW-24G** (puce **Nordic nRF2401**, 2,4 GHz ShockBurst),
+> tapis comme dongle → système **symétrique à transceiver**. Détail dans `docs/materiel.md`.
+> *(Les anciennes réfs « TRU-246 / TRH-?16 / ~916 MHz » étaient de mauvais déchiffrages.)*
 >
 > ⚠️ Le récepteur est branché physiquement sur le **PC Windows**. Les Claude du serveur et du Mac
 > travaillent sur la doc et le code ; la **lecture série en direct** se fait sur le PC Windows

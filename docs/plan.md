@@ -41,17 +41,15 @@ multi-tapis) **intacte et réversible** tant que possible.
 - À garder si le protocole est **chiffré/illisible** ou la **latence RF** d'origine trop élevée pour
   du jeu de rythme.
 
-## Plan D — Transceiver RF, émuler un tapis (retenu 2026-06-19)
-- On se met **côté radio** avec notre propre transceiver **sub-GHz** (même bande que le récepteur
-  d'origine **TRH-?16 ~916 MHz**) : **recevoir** les trames d'un vrai tapis (ID + 4 flèches) **et
-  émettre** des trames forgées que le **récepteur d'origine accepte** comme venant d'un tapis.
-- ➕ **Contourne le handshake** borne↔récepteur (on injecte en amont du récepteur ; c'est la borne qui
-  le réveille normalement). ➕ Récepteur + borne **intacts** → **jeu de base jouable en parallèle**,
-  rien à débrancher ni souder. ➕ La réception RF directe sert aussi le but final (lire les tapis dans
-  notre moteur).
-- ➖ Demande d'**identifier d'abord l'IC RF + la bande/modulation** (TRU-246 / TRH-?16) avant de
-  pouvoir accorder le transceiver et forger une trame valide.
-- Montage, matériel et procédure : **`docs/transceiver-rf.md`**.
+## Plan D — RF directe en 2,4 GHz via nRF24L01+ (RETENU, débloqué 2026-06-19)
+- Radio identifiée : **TRW-24G / Nordic nRF2401** → **2,4 GHz GFSK ShockBurst**, 125 canaux, 250 k/1 M.
+  Émetteur ≡ récepteur (même PCB).
+- Récepteur = **nRF24L01+** (rétro-compatible, « + » pour le 250 kbps, SPI/ESP32) → **recevoir** les
+  trames d'un vrai tapis (ID + 4 flèches) **et émettre** des trames que le **dongle d'origine accepte**.
+- ➕ **Lecture directe sur l'air → contourne le verrou série** (problème MCU↔USB du dongle, pas la radio).
+  ➕ Dongle + borne **intacts** → **jeu de base jouable en parallèle**. ➕ Plus de SDR/CC1101 à acheter.
+- ➖ Reste à relever les **5 paramètres ShockBurst** (sniff du mot de config) + mapping payload→flèches.
+- Montage, matériel et procédure : **`docs/transceiver-rf.md`** ; relevés : **`captorisation/releve-rf.md`**.
 
 ## Reverse engineering du jeu — note
 - Décompiler le jeu = **mauvais chemin** : son code montre comment **lui** affiche/score les flèches,

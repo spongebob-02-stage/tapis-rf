@@ -1,67 +1,73 @@
-# Transceiver RF — émuler un tapis (émettre + recevoir directement)
+# Transceiver RF — récepteur nRF24L01+ (lire + émettre, émuler un tapis)
 
-But : au lieu d'espionner le lien série récepteur↔borne, on **se met sur la radio** avec notre propre
-transceiver sub-GHz. On **reçoit** ce qu'un vrai tapis émet (décoder ID + flèches) **et** on **émet**
-des trames forgées que le **récepteur d'origine** accepte comme venant d'un tapis.
+But : se mettre sur la **radio des tapis** avec un transceiver **identique en protocole**. **Recevoir**
+ce qu'un vrai tapis émet (ID + flèches) pour notre moteur, et pouvoir **émettre** des trames que le
+**dongle d'origine accepte** (injection dans le jeu de base).
 
-> **Décision 2026-06-19.** La capture logicielle USB (USBPcap/Wireshark) sur la borne est **écartée**
-> (bureau Windows inatteignable — voir `journal.md`). Plutôt que de courir après le handshake
-> borne↔récepteur (sniff UART, replay), on agit **côté radio**, **en amont du récepteur**.
+> ✅ **Étape 0 résolue (2026-06-19).** Radio = module **TRW-24G** / puce **Nordic nRF2401** →
+> **2,4 GHz GFSK ShockBurst**, 125 canaux (1 MHz), 250 kbps ou 1 Mbps. Émetteur ≡ récepteur (même PCB).
+> Détail : `materiel.md` + `../captorisation/releve-rf.md`. **Rayés : SDR, CC1101, 433/868/916 MHz.**
 
 ## Pourquoi cette voie
 
-- **Contourne le handshake.** Le blocage connu (« le récepteur ne sort les boutons qu'après un
-  handshake de la borne », voir `protocol.md`) ne concerne que la lecture sur COM5. En **émettant en
-  RF**, c'est la **borne réelle** (avec son vrai handshake) qui pilote le récepteur d'origine ; lui
-  fait son travail normal et relaie nos trames vers le jeu.
-- **Récepteur d'origine intact, jeu de base jouable EN PARALLÈLE.** On ne débranche rien, on ne soude
-  rien, on ne coupe aucun fil. Les vrais tapis continuent de marcher en même temps que notre émetteur.
-- **Sert le but final.** En réception RF directe, on lit les tapis depuis **notre** moteur de jeu
-  (Godot 4 / web / Python) sans dépendre du récepteur ni du logiciel iDANCE2.
+- **Contourne le verrou série.** Le blocage « le récepteur ne sort les boutons qu'après un handshake de
+  la borne » est un problème **MCU↔USB du dongle**, pas la radio. En lisant **directement sur l'air**,
+  on l'ignore complètement (voir `protocol.md`).
+- **Dongle + borne intacts → jeu de base jouable EN PARALLÈLE.** On ne débranche rien, on ne soude rien.
+- **Sert le but final.** Réception RF directe → lire les tapis dans **notre** moteur (Godot 4 / web / Python).
 
 ## Matériel à sourcer
 
-Cible : un **transceiver sub-GHz** sur la **même bande** que la chaîne d'origine — récepteur
-**TRH-?16 ~916 MHz**, émetteur tapis **TRU-246** (bande/modulation exactes **à confirmer**, voir
-`materiel.md`).
+- **nRF24L01+** (×1–2, ~2 € pièce) — successeur **rétro-compatible** du nRF2401 en ShockBurst (non-Enhanced).
+  ⚠️ **Bien prendre la variante « + »** : seule à faire le **250 kbps** (le nRF2401 d'origine peut l'utiliser).
+- **ESP32** (déjà au projet) — pilote le nRF24L01+ en **SPI** + fait le pont vers le moteur.
+- **Analyseur logique 8 voies** (~10 €) — pour la voie déterministe ci-dessous (fortement conseillé).
+- ❌ Plus besoin de **RTL-SDR / CC1101**.
 
-- **Étape 0 — identifier la radio d'origine (bloquant)** : relever les réfs exactes des modules
-  **TRU-246** (tapis) et **TRH-?16** (récepteur), retrouver l'**IC RF** (souvent un CC1101 / Si4432 /
-  RFMxx) et la **bande** + **modulation** (probable GFSK/ASK sub-GHz). Sans ça, impossible d'accorder
-  le transceiver ni de forger une trame valide. **Check-list de relevé terrain : `../captorisation/releve-rf.md`.**
-- **Transceiver retenu (sous réserve de l'étape 0)** : un module **CC1101 868/915 MHz** (~3-5 €, large
-  gamme de bandes/modulations, piloté en **SPI** par un ESP32/Pico) **ou** un module **identique au
-  TRU-246** récupéré sur un **tapis de spare** (émulation 1:1, la plus sûre).
-- Pour la **recon** initiale, un **RTL-SDR** (~25 €) — ou un récepteur du même IC — aide à confirmer
-  bande/modulation **avant** achat ferme.
-- + MCU hôte (**ESP32** ou **Pico**, déjà au projet) pour piloter le transceiver et faire le pont USB↔PC.
+## Les 5 paramètres ShockBurst à relever
 
-> ⚠️ Tant que bande/modulation/format ne sont pas confirmés, **ne pas commander à l'aveugle** : un
-> CC1101 couvre large, mais un module incompatible avec le TRU-246 ne sera pas accepté par le récepteur.
+ShockBurst **classique** = récepteur **pré-configuré** (pas de payload dynamique). Pour capter un tapis,
+il faut : **canal `RF_CH`**, **débit `RF_DR`**, **adresse (largeur + valeur)**, **longueur de payload
+fixe**, **schéma CRC**.
 
-## Contrainte non négociable — réversibilité
+- **Voie 1 — déterministe (recommandée)** : sniffer le **mot de config (~15 o)** que l'**ATMEGA32L**
+  écrit au nRF2401 **au boot**. Analyseur logique sur **CS / CLK1 / DATA** (+ CE). Alimenter le tapis →
+  capturer la rafale (CS haut) → décoder selon les registres nRF2401 : canal, débit, adresses, largeur
+  d'adresse, longueur payload, CRC, RX/TX. **Donne aussi l'ADRESSE exacte** (indispensable pour filtrer
+  le bruit 2,4 GHz).
+- **Voie 2 — sniff aveugle** : nRF24L01+ en **promiscuous** (méthode Goodspeed / Mousejack) — largeur
+  d'adresse 2 o, « adresse » = motif de préambule (`0x00AA` / `0x0055`), CRC off, **balayage des 125
+  canaux** → reconstruire l'adresse. Plus lent et bruité.
 
-- **Aucune modif du récepteur d'origine** ni de la borne : on n'agit que **par les ondes**.
-- **Aucune soudure** sur les cartes d'origine ; pour l'émulation 1:1 on **réutilise un tapis de spare**
-  (on en a > 4) ou un module neuf — **jamais** le matériel de référence.
-- À tout moment on doit pouvoir **jouer au jeu de base** : vrais tapis + récepteur d'origine, intacts.
+> ⚠️ **Bruit 2,4 GHz** : le nRF2401 est hypersensible et la bande est saturée (WiFi / BT / micro-ondes).
+> **Toujours filtrer par adresse + CRC** → d'où l'intérêt de la **voie 1**.
+
+## Configurer le nRF24L01+ pour recevoir un nRF2401
+
+Régler le nRF24L01+ **à l'identique** et **désactiver l'Enhanced ShockBurst** :
+- même **canal** (`RF_CH`), même **débit** (`RF_DR`), même **largeur + valeur d'adresse** (`SETUP_AW`,
+  `RX_ADDR_P0`), même **longueur de payload fixe** (`RX_PW_Px`, **pas de DPL**), même **CRC**
+  (`EN_CRC` / `CRCO`), **`EN_AA = 0`**, **`DYNPD = 0`**.
+- Le **même module** peut aussi **émettre** des trames ShockBurst forgées (injection) et **lire** les tapis.
 
 ## Procédure
 
-1. **Recon** : transceiver (ou SDR) accordé sur la bande, capturer ce qu'émet un **vrai tapis** appairé
-   en marchant **une flèche à la fois, un tapis à la fois** → isoler **header / ID tapis (DIP switches)
-   / bitmask des 4 flèches / checksum**.
-2. **Décodage** : reconstituer le format de trame RF (recouper avec `protocol.md`, côté série).
-3. **Émission** : forger une trame « flèche X du tapis N » et l'émettre → vérifier qu'elle **s'affiche
-   dans le jeu** via le récepteur d'origine (jeu de base toujours actif).
-4. **Lecture directe** : en parallèle, exposer les flèches décodées en `{tapis, flèche, appui}` vers
-   notre moteur (WebSocket → Godot/web, ou direct en Python).
+1. **Acquérir les 5 params** (voie 1 : sniff du mot de config).
+2. **Configurer** le nRF24L01+ → capter les trames d'un vrai tapis.
+3. **Décoder le payload** : marcher **1 flèche / 1 tapis à la fois** → **ID (DIP) + bitmask flèches + CRC**.
+4. **Exposer** `{tapis, flèche, appui}` vers le moteur (ESP-NOW / WebSocket → Godot/web, ou direct Python).
+5. **Option** : **émettre** une trame forgée → vérifier qu'elle **s'affiche dans le jeu** (dongle d'origine).
+
+## Réversibilité — non négociable
+
+- **Aucune modif du dongle / de la borne** : on n'agit que par les ondes (réception) ou par injection RF.
+- **Aucune soudure** : sniff de config = analyseur **clipé** sur les pads, sur un **tapis de spare** (on en a > 4).
+- À tout moment : **vrais tapis + dongle d'origine** → **jeu de base jouable**.
 
 ## À faire
 
-- [ ] **(bloquant)** Relever les réfs **TRU-246 / TRH-?16** → IC RF + **bande** + **modulation** (GFSK/ASK ?).
-- [ ] Choisir/commander le transceiver (CC1101 sub-GHz **ou** module identique au TRU-246) + MCU hôte.
-- [ ] **Recon RF** : capturer un vrai tapis (1 flèche / 1 tapis à la fois) → ID + bitmask + checksum.
-- [ ] **Émettre** une trame forgée → validée si elle **s'affiche dans le jeu** (récepteur d'origine intact).
-- [ ] **Reader** côté PC : sortie `{tapis, flèche, appui}` + pont WebSocket vers le moteur de jeu.
-- [ ] Vérifier en fin de séance que **vrais tapis + récepteur d'origine** rejouent au **jeu de base**.
+- [ ] Commander **nRF24L01+** (bien le « + ») + **analyseur logique 8 voies**.
+- [ ] **Voie 1** : sniffer le mot de config (CS/CLK1/DATA) → `RF_CH`, `RF_DR`, adresse, payload, CRC.
+- [ ] **Relever DIP → canal** (+ n° affiché dans le jeu) pour la table d'ID.
+- [ ] Configurer le nRF24L01+ → **capter** un tapis ; **décoder** payload → flèches.
+- [ ] **Reader** + pont **ESP-NOW / WebSocket** → Godot ; option **injection** d'une trame forgée.
