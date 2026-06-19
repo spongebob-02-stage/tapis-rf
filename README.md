@@ -67,5 +67,6 @@ docs/materiel.md       # fiche matériel : émetteur (tapis) vs récepteur, capt
 docs/transceiver-rf.md # approche retenue (2026-06-19) : émuler un tapis en RF (émettre + recevoir)
 docs/plan.md           # architecture cible : Plan A (HID) / B (sniff) / C (retrofit) / D (transceiver RF)
 docs/journal.md        # journal de suivi daté (multi-machines)
+captorisation/         # relevés terrain : check-list + photos/marquages RF à collecter
 scripts/               # lecteurs / outils
 ```

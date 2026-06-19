@@ -28,7 +28,7 @@ Cible : un **transceiver sub-GHz** sur la **même bande** que la chaîne d'origi
 - **Étape 0 — identifier la radio d'origine (bloquant)** : relever les réfs exactes des modules
   **TRU-246** (tapis) et **TRH-?16** (récepteur), retrouver l'**IC RF** (souvent un CC1101 / Si4432 /
   RFMxx) et la **bande** + **modulation** (probable GFSK/ASK sub-GHz). Sans ça, impossible d'accorder
-  le transceiver ni de forger une trame valide.
+  le transceiver ni de forger une trame valide. **Check-list de relevé terrain : `../captorisation/releve-rf.md`.**
 - **Transceiver retenu (sous réserve de l'étape 0)** : un module **CC1101 868/915 MHz** (~3-5 €, large
   gamme de bandes/modulations, piloté en **SPI** par un ESP32/Pico) **ou** un module **identique au
   TRU-246** récupéré sur un **tapis de spare** (émulation 1:1, la plus sûre).
