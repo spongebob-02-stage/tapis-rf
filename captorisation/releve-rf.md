@@ -27,7 +27,8 @@
 - [ ] **Mapping payload → flèches** : marcher **1 flèche / 1 tapis à la fois** → bits ↔ flèches.
 
 > Méthode déterministe pour les 5 premiers : **sniff du mot de config** (~15 o) écrit par l'ATMEGA32L au
-> nRF2401 au boot, analyseur logique sur **CS / CLK1 / DATA**. Détail : `../docs/transceiver-rf.md`.
+> nRF2401 au boot, analyseur logique sur **CS / CLK1 / DATA**. Schéma de câblage : `cablage-analyseur.md`.
+> Suite (config nRF24L01+) : `../docs/transceiver-rf.md`.
 
 ## Photos (dans ce dossier)
 - `module-trw24g-face-rf.jpeg` — module RF, face antenne : « TRW-24G », puce nRF2401, « RF.NET.TW ». *(IMG_8033)*

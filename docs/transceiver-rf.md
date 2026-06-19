@@ -34,7 +34,7 @@ fixe**, **schéma CRC**.
   écrit au nRF2401 **au boot**. Analyseur logique sur **CS / CLK1 / DATA** (+ CE). Alimenter le tapis →
   capturer la rafale (CS haut) → décoder selon les registres nRF2401 : canal, débit, adresses, largeur
   d'adresse, longueur payload, CRC, RX/TX. **Donne aussi l'ADRESSE exacte** (indispensable pour filtrer
-  le bruit 2,4 GHz).
+  le bruit 2,4 GHz). **Câblage détaillé (schéma) : `../captorisation/cablage-analyseur.md`.**
 - **Voie 2 — sniff aveugle** : nRF24L01+ en **promiscuous** (méthode Goodspeed / Mousejack) — largeur
   d'adresse 2 o, « adresse » = motif de préambule (`0x00AA` / `0x0055`), CRC off, **balayage des 125
   canaux** → reconstruire l'adresse. Plus lent et bruité.
