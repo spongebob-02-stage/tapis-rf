@@ -40,6 +40,39 @@ ce qu'un vrai tapis émet (ID + flèches) pour notre moteur, et pouvoir **émett
 
 > Budget indicatif (hors ESP32 déjà au projet) : nRF24L01+ + découplage + Dupont ~5 € ; analyseur logique ~10 €.
 
+## Brochage SPI ESP32 ↔ nRF24L01+
+
+Header du module (2×4, vue de dessus) :
+
+```
+   nRF24L01+
+   +-----------------+
+   | 1 GND   2 VCC   |
+   | 3 CE    4 CSN   |
+   | 5 SCK   6 MOSI  |
+   | 7 MISO  8 IRQ   |
+   +-----------------+
+```
+
+Câblage (pins **VSPI** par défaut de l'ESP32) :
+
+| nRF24L01+ | ESP32 (DevKit) | Note |
+|---|---|---|
+| **GND** (1) | **GND** | masse |
+| **VCC** (2) | **3V3** | ⚠️ 3,3 V — **jamais 5 V / VIN** |
+| **CE** (3) | **GPIO4** | libre (réassignable en code) |
+| **CSN** (4) | **GPIO5** | = SS de VSPI (réassignable) |
+| **SCK** (5) | **GPIO18** | VSPI SCK |
+| **MOSI** (6) | **GPIO23** | VSPI MOSI |
+| **MISO** (7) | **GPIO19** | VSPI MISO |
+| **IRQ** (8) | — | **non connecté** (optionnel ; le polling suffit) |
+
+- En code (lib **RF24**) : `RF24 radio(4, 5);  // CE=GPIO4, CSN=GPIO5`.
+- **CE/CSN** librement réassignables sur n'importe quel GPIO **de sortie** ; **SCK/MOSI/MISO** = bus
+  **VSPI matériel** (réassignables via `SPI.begin(sck, miso, mosi, ss)` si besoin).
+- ⚠️ Éviter pour CE/CSN : **GPIO34–39** (entrée seule) et les **strapping pins** (0, 2, 12, 15).
+- Mettre le **condensateur / l'adaptateur** entre **VCC (2)** et **GND (1)** au plus près du module.
+
 ## Les 5 paramètres ShockBurst à relever
 
 ShockBurst **classique** = récepteur **pré-configuré** (pas de payload dynamique). Pour capter un tapis,
