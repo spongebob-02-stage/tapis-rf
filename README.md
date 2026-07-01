@@ -25,6 +25,11 @@ partagée** entre les machines de travail (PC Windows, serveur, Mac).
 - 🔜 **Prochaine étape** : récepteur **nRF24L01+** (rétro-compatible, ~2 €, SPI/ESP32) → **lire les
   tapis sur l'air** (contourne le verrou série) **et émettre** des trames que le dongle accepte. Reste
   à relever les **5 params ShockBurst**. Montage : `docs/transceiver-rf.md`.
+- 🛠️ **2026-07-01 — Analyseur logique reçu, chaîne de capture prête** : clone 8 voies 24 MHz
+  (`fx2lafw`), **PulseView + sigrok-cli** installés (PC-Win), analyseur détecté. Fils **soudés** sur le
+  module (**DATA→CH1, CLK1→CH2, CS→CH3**), masse sur le **« – » batterie**. **Capture pas encore réussie**
+  (signal plat → on débogue l'**enfoncement du module** dans l'embase + le **timing** de capture).
+  Détails et reprise : `docs/journal.md` + `captorisation/cablage-analyseur.md`.
 
 ## Matériel
 

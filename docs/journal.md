@@ -200,4 +200,59 @@ Au lieu d'espionner / rejouer le dialogue borne↔récepteur, on agit **sur la r
 
 ---
 
+## 2026-07-01 — PC-Win — Analyseur logique reçu : montage + 1res captures (EN COURS, bloqué)
+
+Objectif : capter le **mot de config ShockBurst** (puis le payload TX) du nRF2401 en espionnant les
+fils **MCU ↔ module** avec l'analyseur logique fraîchement reçu.
+
+### Matériel reçu
+- **Analyseur logique 8 voies 24 MHz**, clone **FX2 / `fx2lafw`** (USB **0925:3881**, étiqueté **CH1…CH8**, pas de CH0).
+- **10 crochets de test à ressort** (finalement écartés : trop encombrants → on a **soudé des fils**).
+
+### Chaîne logicielle (PC-Win, portable dans `yannis\tools` — détail dans `JOURNAL_MODIFICATIONS.md`)
+- **PulseView 0.4.2** + **sigrok-cli 0.7.2** (moteur sigrok en ligne de commande, piloté sans GUI).
+- Pilote **WinUSB** posé via **Zadig** (fourni avec PulseView). Correctif DLL VC++2010 (`msvcr100`/`msvcp100`) copiées dans les dossiers.
+- Analyseur **détecté** : `fx2lafw … Saleae Logic … 8 channels`. ⚠️ Un **seul** logiciel à la fois sur l'analyseur.
+
+### Brochage du module CONFIRMÉ (connecteur 2×5, lu sur la sérigraphie)
+Module sur **embase avec un jeu** (broches accessibles). Repère fiable = **l'antenne**.
+```
+        ▲ CÔTÉ ANTENNE
+   CLK1 ───── DATA      (CLK1 et DATA face à face, côté antenne)
+   CS         DR1       (CS juste sous CLK1)
+   CLK2       DOUT2
+   CE         DR2
+   G          VCC ⛔    (bas, côté marquage « 1141, V2.01 »)
+        ▼
+```
+- Utiles : **CS, CLK1, DATA** (mot de config) + **CE** (payload TX). Masse = **G** / « – » batterie / boîtier blindé.
+- ⚠️ **VCC** (bas, côté DATA) = **à ne jamais toucher**.
+
+### Câblage réalisé (SOUDÉ)
+- **DATA → CH1**, **CLK1 → CH2**, **CS → CH3** (CE pas encore câblé).
+- Masse analyseur (**GND**) → **fil noir de la batterie** (« – »).
+- ⚠️ Analyseur en CH1…CH8, logiciel en D0…D7 → **correspondance CHx↔Dx à confirmer à la capture**.
+
+### Blocage actuel : captures PLATES (0 activité sur les 8 voies)
+Plusieurs captures sigrok-cli (2–6 s, 4 MHz) → **0 transition** partout. Causes probables :
+1. **Timing** : la capture ne dure que quelques secondes → il faut **taper la flèche pile pendant** l'enregistrement
+   (les 1res captures ont pu tomber à côté ; la masse n'était pas branchée sur la toute 1re).
+2. **Enfoncement** : fils soudés sur les **plots du module** → si module pas assez **enfoncé dans l'embase**,
+   ces plots sont **coupés du MCU** → rien à capter.
+
+### À FAIRE pour reprendre (prochaine session)
+- [ ] **Multimètre continuité** : plot **G du module ↔ fil noir batterie** → doit **bipper** (sinon ré-enfoncer le module).
+- [ ] **Capture synchronisée** : taper HAUT **en continu**, capturer les 8 voies **pendant** → repérer les voies actives
+  (horloge = va-et-vient régulier ; CS = trame ; DATA = données) → en déduire la corresp. CHx↔Dx.
+- [ ] **Mot de config au boot** (allumage) → décodeur **SPI** (`clk=CLK1, mosi=DATA, cs=CS`, **CS actif HAUT**)
+  → canal / débit / adresse / largeur / longueur payload / CRC.
+- [ ] **Payload TX** (CE haut) → adresse + bitmask flèches.
+- Procédure + commandes exactes : `../captorisation/cablage-analyseur.md`.
+
+### Compris (à garder en tête)
+- Sur les fils MCU↔module passe l'**adresse + le payload** (= boutons + ID). Le nRF2401 **fabrique lui-même**
+  préambule + CRC + modulation (pas sur les fils, mais donnés par le mot de config). → **lire les fils = plus fiable que la RF**.
+
+---
+
 <!-- Nouvelles entrées au-dessus de cette ligne. Indiquer la machine. -->

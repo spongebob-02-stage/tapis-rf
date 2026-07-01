@@ -84,3 +84,49 @@ Brochage relevé (voir `releve-rf.md` + photo `module-trw24g-face-pads.jpeg`) :
 - Lire les octets de la rafale → les mapper sur les **registres de config nRF2401** :
   **canal (`RF_CH`) · débit (`RF_DR`) · adresse (largeur + valeur) · longueur payload · CRC**.
 - Ces 5 valeurs → à recopier dans le firmware **ESP32 + nRF24L01+** (voir `../docs/transceiver-rf.md`).
+
+---
+
+## Relevé réel + procédure (2026-07-01) — analyseur `fx2lafw`, module sur embase
+
+### Analyseur utilisé
+- Clone **8 voies 24 MHz FX2 / `fx2lafw`** (USB **0925:3881**), étiqueté **CH1…CH8** (⚠️ **pas de CH0**).
+- Pilote **WinUSB** (Zadig). Logiciels **PulseView 0.4.2** + **sigrok-cli 0.7.2** (portables, `yannis\tools`).
+- ⚠️ **Un seul** logiciel à la fois sur l'analyseur (fermer PulseView avant sigrok-cli).
+
+### Brochage réel du connecteur (2×5) — repère = l'ANTENNE
+```
+        ▲ CÔTÉ ANTENNE  (nos signaux principaux ici)
+   CLK1 ───── DATA      (CLK1 et DATA face à face)
+   CS         DR1       (CS juste sous CLK1)
+   CLK2       DOUT2
+   CE         DR2
+   G          VCC ⛔    (bas, côté marquage « 1141, V2.01 »)
+        ▼
+```
+
+### Câblage réalisé (SOUDÉ, sans pince) + voies
+| Signal | Soudé sur | Voie (étiquette carte) | Canal logiciel |
+|---|---|---|---|
+| CS   | plot CS   | **CH3** | à confirmer (D?) |
+| CLK1 | plot CLK1 | **CH2** | à confirmer (D?) |
+| DATA | plot DATA | **CH1** | à confirmer (D?) |
+| CE   | *(à souder ensuite)* | CH4 | — |
+| masse | **« – » batterie** (fil noir) / plot G / boîtier blindé | **GND** | — |
+
+> ⚠️ CHx (carte) ≠ Dx (logiciel). La correspondance **se déduit à la capture** : on enregistre les 8 voies
+> et on regarde lesquelles bougent.
+
+### Procédure sigrok-cli (piloté sans GUI)
+1. **Détecter** : `sigrok-cli --scan` → doit lister `fx2lafw … 8 channels`.
+2. **Repérer l'activité** (taper HAUT **en continu pendant** la commande) :
+   `sigrok-cli -d fx2lafw --config samplerate=4m --samples 16000000 -O vcd -o cap.vcd`
+   → compter les transitions par voie (voie horloge = beaucoup de changements).
+3. **Mot de config au boot** : capture lancée **avant d'allumer** le tapis (ou déclenchement sur front),
+   puis décoder : `sigrok-cli -i cap.vcd -P spi:clk=<CLK1>:mosi=<DATA>:cs=<CS>:cs_polarity=active-high -A spi`.
+4. **Payload TX** : capturer pendant un appui (CE haut) → adresse + bitmask flèches.
+
+### Deux pièges rencontrés (2026-07-01)
+- **Timing** : la capture ne dure que quelques secondes → **générer le signal (taper) pile pendant**.
+- **Enfoncement** : fils soudés sur les **plots du module** → si module pas bien **enfoncé dans l'embase**,
+  plots **isolés du MCU** (rien à capter). Test : continuité **plot G ↔ « – » batterie** = doit **bipper**.
